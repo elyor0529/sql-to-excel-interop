@@ -1,0 +1,79 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SQLToXlsx.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="Query1" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">with sell_orders as (
+
+
+    select 
+	    o.ContractId
+	  ,cast(o.Datepost as date) datepost
+	   ,(case when cast(datepart(hour,Datepost) as int)&lt;13
+				                                                    then 1
+				                                                    when cast(datepart(hour,Datepost) as int)&gt;13
+					                                                    then 2 end)session
+	   ,sum(kolvo) kolvo
+	   ,min (Price) Price
+	from aOrders o
+	group by 
+	 o.ContractId
+	,cast(o.Datepost as date)
+	,(case when cast(datepart(hour,Datepost) as int)&lt;13
+				                                                    then 1
+				                                                    when cast(datepart(hour,Datepost) as int)&gt;13
+					                                                    then 2 end)
+
+)
+
+select 
+
+  ar.GroupName,
+ ar.SubGroupName,
+  c.name_commod,
+cast(bord.Datepost as date) Datepost,
+  bord.ContractId,
+  c.base_price,
+  (case when cast(datepart(hour,bord.Datepost) as int)&lt;13
+				                                                    then 'Утренный'
+				                                                    when cast(datepart(hour,bord.Datepost) as int)&gt;13
+					                                                    then 'Вечерный' end)session,  
+																		coalesce(br.Id,'') nomerSdelki,
+																		coalesce(js.FullName,'') Prodovec,
+																		  coalesce(js.id,'') InpProdovec,
+																		  coalesce(b.SBroker,'') BrokerProdovecId,
+																		  sord.kolvo*c.lot as prodkolvo,
+																		  sord.Price prodcena,
+																		  c.unit,
+																		  c.valuta,
+																		  jb.FullName Pokupatel,
+																		  jb.id InpPokupatelya,
+																		  bk.trade_ground TP,
+																		  bord.BrokerID BrokerPokupatelId,
+																		  bord.Kolvo*c.lot as pokupkolvo,
+																		  bord.Price cenatovara,
+																		  coalesce(b.CostMoney,'') CenaSdelki
+	
+	
+ 
+from aOrders bord
+join sell_orders sord on    bord.ContractId = sord.ContractId
+						and cast(bord.Datepost as date) = sord.datepost
+						and (case when cast(datepart(hour,bord.Datepost) as int)&lt;13
+				                                                    then 1
+				                                                    when cast(datepart(hour,bord.Datepost) as int)&gt;13
+					                                                    then 2 end) = sord.session
+						
+left join aBargains br on bord.AppID = br.ord_buyer
+left join Clearing.dbo.Bargain b on b.id=br.Id
+left join aContract c on c.id=bord.ContractId
+left join aBrokers bk on bk.id=bord.BrokerID
+left join Clearing.dbo.Juridical jb on jb.id=floor(bord.INP/10)
+left join Clearing.dbo.Juridical js on js.id=b.SAccount
+left join aReportTen ar on ar.ContractID=c.id
+where bord.Datepost between '2019-04-01' and '2019-05-01'
+and bord.IsProd = 1 
+order by br.id desc</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
